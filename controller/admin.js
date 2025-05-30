@@ -1,24 +1,41 @@
-import admin from '../services/admin'
+import {create,update,deletee,list,byid,otpsent,otpverify} from '../services/admin'
 
 
 
-const adminController = () => {
+
+// const adminController = () => {
+//   let methods = {};
+const admin = (modelName) => {
+  let model = modelName;
   let methods = {};
   methods.create = async (req, res, next) => {
-    admin.create(req, res, next);
+
+  create(req, res, next);
   };
+
+  
   methods.update_admin = async(req,res,next)=>{
-    admin.update(req,res,next)
+  
+    update(req,res,next)
   }
   methods.delete_admin = async(req,res,next)=>{
-    admin.deletee(req,res,next)
+    
+    deletee(req,res,next)
   }
   methods.list_admin =async(req,res,next)=>{
-      admin.list(req,res,next)
+  
+    list(req,res,next)
   }
   methods.id_admin  =async (req,res,next)=>{
-    admin.byid(req,res,next)
+ 
+    byid(req,res,next)
+  }
+  methods.otpsent = async(req,res,next)=>{
+    otpsent(req,res,next)
+  }
+  methods.otpverify = async(req,res,next)=>{
+    otpverify(req,res,next)
   }
   return methods;
 };
-module.exports = adminController("Admin");
+module.exports = admin("Admin");

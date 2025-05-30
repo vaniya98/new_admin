@@ -10,10 +10,14 @@
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",
+    "bcrypt": "^6.0.0",
     "joi": "^17.13.3",
+    "multer": "^2.0.0",
+    "my-next-app": "file:",
     "next": "15.3.2",
     "prisma": "^6.8.2",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "twilio": "^5.7.0"
   }
 }

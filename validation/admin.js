@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-export const createAdminSchema = Joi.object({
+exports.createAdminSchema = Joi.object({
   name: Joi.string()
     .min(2)
     .max(50)
@@ -32,13 +32,6 @@ export const createAdminSchema = Joi.object({
     .messages({
       "string.empty": "Phone number is required",
       "string.pattern.base": "Phone number must be exactly 10 digits",
-    }),
-
-  profilePhoto: Joi.string()
-    .uri()
-    .optional()
-    .messages({
-      "string.uri": "Profile photo must be a valid URL",
     }),
 
   password: Joi.string()

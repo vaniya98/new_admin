@@ -1,19 +1,24 @@
 
+import { symbol } from "joi";
 import prisma from "../src/lib/prima";
+
 class AdminRepository {
   constructor() {
     this.model = prisma["Admin"];
   }
   async create(req, res) {
     try {
-      const { name, email, age,phoneNumber,password } = req.body;
+      const { name, email, age,phoneNumber,profilePhoto,password,isSuperAdmin } = req.body;
+    
       const result = await this.model.create({
         data: {
           name,
           email,
           age,
           phoneNumber,
-          password
+          profilePhoto,
+          password,
+          isSuperAdmin
         },
       });
       if (!result)
@@ -25,7 +30,9 @@ class AdminRepository {
         email: result.email,
         age: result.age,
         phoneNumber: result.phoneNumber,
-        password: result.password
+profilePhoto:result.profilePhoto,
+        password: result.password,
+        isSuperAdmin:result.isSuperAdmin
       };
     } catch (error) {
       return res.status(500).json({ status: false, message: error.message });
@@ -101,8 +108,37 @@ async findUnique(req,res){
          return res.status(500).json({ status: false, message: error.message });
     }
 }
+
+async findByPhone(phoneNumber){
+try {
+  // const {phoneNumber}=req.body 
+  const result  = await this.model.findUnique({
+     where: { phoneNumber: phoneNumber },
+  })
+  // if(!result) return res.status(400).json({status:false,message:"findbyphone not find "})
+    return result
+} catch (error) {
+   throw new Error("Error finding admin by phone: " + error.message);
 }
-module.exports = AdminRepository;
+}
+async updateByPhone(phoneNumber,data ){
+try {
+  // const {phoneNumber}=req.body 
+  const result  = await this.model.update({
+     where: { phoneNumber: phoneNumber },
+     data:data
+  })
+  // if(!result) return res.status(400).json({status:false,message:"updateByPhone not update "})
+    return result
+} catch (error) {
+    throw new Error("Error finding admin by phone: " + error.message);
+}
+}
+
+
+} 
+// module.exports = AdminRepository;
+export default AdminRepository;
 
 
 
