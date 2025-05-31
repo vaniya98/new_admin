@@ -39,8 +39,6 @@ export const create = async (req, res, next) => {
         .status(400)
         .json({ status: false, message: "phoneNumber is required" });
     }
-   
-
     if (!password)
       return res
         .status(400) 
@@ -55,11 +53,16 @@ export const create = async (req, res, next) => {
       return res.status(400).json({ status: false, message: error?.message });
     }
 
+     
+
     
    const profilePhotoPath = `/uploads/${file.filename}`;
 
 
+
+
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const parsedData = {
   name,
   email,
@@ -67,19 +70,9 @@ export const create = async (req, res, next) => {
   phoneNumber,
   password: hashedPassword,
   isSuperAdmin: String(isSuperAdmin).toLowerCase() === "true",
-  profilePhoto: profilePhotoPath,
+  profilePhoto: profilePhotoPath
 };
-    // var result = await adminRepo.create(
-    //   {
-    //     ...req,
-    //     body: { ...req.body,
-    //         age: parseInt(age) ,
-    //         symbol: profilepath,
-    //          password: hashedPassword,
-    //           isSuperAdmin: isSuperAdmin === "true" || isSuperAdmin === true, },
-    //   },
-    //   res
-    // );
+
 const result = await adminRepo.create({ ...req, body: parsedData }, res);
     return res.status(200).json({
       status: true,
@@ -194,6 +187,7 @@ export const byid = async (req, res, next) => {
 };
 
 
+
 export const otpsent = async (req,res,next)=>{
  try {
     const { phoneNumber } = req.body;
@@ -210,35 +204,38 @@ export const otpsent = async (req,res,next)=>{
     const otpExpiry = getOtpExpiry();
 
     // Save OTP and expiry in DB
-    await adminRepo.updateByPhone(phoneNumber, {
-      otpCode: otpCode,
-      otpExpiry: otpExpiry,
-    });   
+   const updatedAdmin = await adminRepo.updateByPhone(phoneNumber, {
+      otpCode,
+      otpExpiry,
+    });
+
+    console.log("OTP saved to DB:", updatedAdmin.otpCode);
+
  
     // Send OTP via SMS
-    const smsResult = await sendOTPviaSMS(phoneNumber, otp);
+    const smsResult = await sendOTPviaSMS(phoneNumber, otpCode);
     if (!smsResult.success) {
       return res.status(500).json({ message: "Failed to send OTP" });
     }
 
-    res.status(200).json({ message: "OTP sent successfully",result:{ phoneNumber } });
+    res.status(200).json({ message: "OTP sent successfully",result:{ phoneNumber },otpCode });
   } catch (error) {
       console.log(error);
     return res.status(400).json({
       status: false,
       result: null,
       message: error.message||"somthing error",
-    });
+    });     
   }
 };
 
 export const otpverify = async (req,res,next)=>{
   try {
     const { phoneNumber, otpCode } = req.body;
-    if (!phoneNumber || !otpCode) {
+    if (!phoneNumber || !otpCode) { 
       return res.status(400).json({ message: "phoneNumber and otp are required" });
-    }
-
+    }   
+ 
     const admin = await adminRepo.findByPhone(phoneNumber);
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
@@ -248,7 +245,6 @@ export const otpverify = async (req,res,next)=>{
      if (String(admin.otpCode) !== String(otpCode)) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
-
     if (new Date() > new Date(admin.otpExpiry)) {
       return res.status(400).json({ message: "OTP expired" });
     }
@@ -259,6 +255,40 @@ const result =    await adminRepo.updateByPhone(phoneNumber, { otpCode: null, ot
     res.status(200).json({ message: "OTP verified successfully" ,result});
   } catch (err) {
     console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+export const login_admin = async(req, res) => {
+  try {
+    const { phoneNumber, otpCode } = req.body;
+    if (!phoneNumber || !otpCode) {
+      return res.status(400).json({ message: "phoneNumber and otpCode are required" });
+    }
+
+    const admin = await adminRepo.findByPhone(phoneNumber);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found." });
+    }
+
+    if (String(admin.otpCode).trim() !== String(otpCode).trim()) {
+      return res.status(400).json({ message: "Invalid OTP." });
+    }
+
+    if (new Date() > new Date(admin.otpExpiry)) {
+      return res.status(400).json({ message: "OTP expired." });
+    }
+
+    await adminRepo.updateByPhone(phoneNumber, {
+      otpCode: null,
+      otpExpiry: null,
+    });
+
+    return res.status(200).json({ message: "Login successful", result: { phoneNumber } });
+
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

@@ -125,18 +125,42 @@ async updateByPhone(phoneNumber,data ){
 try {
   // const {phoneNumber}=req.body 
   const result  = await this.model.update({
-     where: { phoneNumber: phoneNumber },
-     data:data
+     where: { phoneNumber },
+     data
   })
   // if(!result) return res.status(400).json({status:false,message:"updateByPhone not update "})
     return result
 } catch (error) {
     throw new Error("Error finding admin by phone: " + error.message);
 }
+
 }
 
+async findByPhone(phoneNumber){
+  try {
+    const result = await this.model.findUnique({
+      where:{phoneNumber}
+    })
+     return result
+  } catch (error) {
+    throw new Error("Error finding admin by phone: " + error.message)
+  }
+}
+async updateByPhones(phoneNumber,data ){
+try {
+  // const {phoneNumber}=req.body 
+  const res  = await this.model.update({
+     where: { phoneNumber },
+     data
+  })
+  // if(!result) return res.status(400).json({status:false,message:"updateByPhone not update "})
+    return result
+} catch (error) {
+    throw new Error("Error finding admin by phone: " + error.message);
+}
 
-} 
+}
+}
 // module.exports = AdminRepository;
 export default AdminRepository;
 

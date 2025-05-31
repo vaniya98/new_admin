@@ -1,4 +1,4 @@
-import {create,update,deletee,list,byid,otpsent,otpverify} from '../services/admin'
+import {create,update,deletee,list,byid,otpsent,otpverify,login_admin} from '../services/admin'
 
 
 
@@ -35,6 +35,9 @@ const admin = (modelName) => {
   }
   methods.otpverify = async(req,res,next)=>{
     otpverify(req,res,next)
+  }
+  methods.login_admin = async(req,res,next)=>{
+    login_admin(req,res,next)
   }
   return methods;
 };
