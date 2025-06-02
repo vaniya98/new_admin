@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE `admin` ADD COLUMN `isActive` BOOLEAN NOT NULL DEFAULT true,
+    ADD COLUMN `isOtpVerified` BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN `lastLogin` DATETIME(3) NULL;

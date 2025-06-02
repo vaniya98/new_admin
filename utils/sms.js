@@ -15,6 +15,6 @@ export const sendOTPviaSMS = async (phoneNumber, otp) => {
     return { success: true, sid: message.sid };
   } catch (err) {
     console.error("Twilio SMS Error:", err);
-    return { success: false, error: err.message };
+    return { success: false, error: err.message };  
   }
 };

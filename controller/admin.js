@@ -1,4 +1,4 @@
-import {create,update,deletee,list,byid,otpsent,otpverify,login_admin} from '../services/admin'
+import {create,update,deletee,list,byid,otpsent,otpverify,login_admin,passwordreset,newpasswordverify} from '../services/admin'
 
 
 
@@ -38,6 +38,12 @@ const admin = (modelName) => {
   }
   methods.login_admin = async(req,res,next)=>{
     login_admin(req,res,next)
+  }
+  methods.passwordreset = async(req,res,next)=>{
+    passwordreset(req,res,next)
+  }
+  methods.newpasswordverify = async(req,res,next)=>{
+    newpasswordverify(req,res,next)
   }
   return methods;
 };

@@ -109,18 +109,7 @@ async findUnique(req,res){
     }
 }
 
-async findByPhone(phoneNumber){
-try {
-  // const {phoneNumber}=req.body 
-  const result  = await this.model.findUnique({
-     where: { phoneNumber: phoneNumber },
-  })
-  // if(!result) return res.status(400).json({status:false,message:"findbyphone not find "})
-    return result
-} catch (error) {
-   throw new Error("Error finding admin by phone: " + error.message);
-}
-}
+
 async updateByPhone(phoneNumber,data ){
 try {
   // const {phoneNumber}=req.body 
@@ -138,6 +127,8 @@ try {
 
 async findByPhone(phoneNumber){
   try {
+  
+  
     const result = await this.model.findUnique({
       where:{phoneNumber}
     })
@@ -161,7 +152,7 @@ try {
 
 }
 }
-// module.exports = AdminRepository;
+
 export default AdminRepository;
 
 
