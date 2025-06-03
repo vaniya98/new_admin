@@ -39,7 +39,11 @@ const admin = (modelName) => {
   methods.login_admin = async(req,res,next)=>{
     login_admin(req,res,next)
   }
+  console.log("102");
+  
   methods.passwordreset = async(req,res,next)=>{
+    console.log("103");
+    
     passwordreset(req,res,next)
   }
   methods.newpasswordverify = async(req,res,next)=>{
@@ -47,4 +51,4 @@ const admin = (modelName) => {
   }
   return methods;
 };
-module.exports = admin("Admin");
+module.exports = admin("admin");

@@ -4,11 +4,12 @@ import prisma from "../src/lib/prima";
 
 class AdminRepository {
   constructor() {
-    this.model = prisma["Admin"];
+    this.model = prisma["admin"];
+     this.Passwordreset = prisma["Passwordreset"]; 
   }
   async create(req, res) {
     try {
-      const { name, email, age,phoneNumber,profilePhoto,password,isSuperAdmin } = req.body;
+      const { name, email, age,phoneNumber,profilePhoto,password,isSuperAdmin,isActive } = req.body;
     
       const result = await this.model.create({
         data: {
@@ -18,21 +19,24 @@ class AdminRepository {
           phoneNumber,
           profilePhoto,
           password,
-          isSuperAdmin
+          isSuperAdmin,
+           isActive: true, 
         },
       });
       if (!result)
         return res
           .status(400)
           .json({ status: false, message: "admin not created " });
-      return {
+      return {  
         name: result.name,
         email: result.email,
         age: result.age,
         phoneNumber: result.phoneNumber,
 profilePhoto:result.profilePhoto,
         password: result.password,
-        isSuperAdmin:result.isSuperAdmin
+        isSuperAdmin:result.isSuperAdmin,
+         isActive: result.isActive
+        
       };
     } catch (error) {
       return res.status(500).json({ status: false, message: error.message });
@@ -115,27 +119,43 @@ try {
   // const {phoneNumber}=req.body 
   const result  = await this.model.update({
      where: { phoneNumber },
+     
      data
   })
   // if(!result) return res.status(400).json({status:false,message:"updateByPhone not update "})
     return result
 } catch (error) {
-    throw new Error("Error finding admin by phone: " + error.message);
+    return res.status(500).json({ status: false, message: error.message });
 }
 
 }
 
 async findByPhone(phoneNumber){
   try {
+
   
-  
-    const result = await this.model.findUnique({
-      where:{phoneNumber}
+    const result = await this.model.findFirst({
+      where:{phoneNumber},
+      // select: {
+      //   id: true,
+      //   name: true,
+      //   email: true,
+      //   age: true,
+      //   phoneNumber: true,
+      //     otpCode: true,
+      //   otpExpiry: true,
+      //   password: true,
+        
+      //   profilePhoto: true,
+      // isOtpVerified: true,
+      //   isActive: true
+      // }      
     })
      return result
   } catch (error) {
-    throw new Error("Error finding admin by phone: " + error.message)
+            throw new Error(`DB error in findByPhone: ${error.message}`);
   }
+
 }
 async updateByPhones(phoneNumber,data ){
 try {
@@ -147,12 +167,74 @@ try {
   // if(!result) return res.status(400).json({status:false,message:"updateByPhone not update "})
     return result
 } catch (error) {
-    throw new Error("Error finding admin by phone: " + error.message);
+    return res.status(500).json({ status: false, message: error.message });
 }
 
 }
+
+
+async deleteResetTokenByAdminId(adminId) {
+  try {
+    console.log("Deleting tokens for adminId:", adminId);
+  const result =   await prisma.Passwordreset.deleteMany({
+    where: {
+      adminId
+    },
+    
+  })
+
+  
+  
+  return result;
+  } catch (error) {
+        throw new Error(`DB error in findByPhone: ${error.message}`);
+  }
+}
+async createResetToken(data) {
+  try {
+    const result = await prisma.Passwordreset.create({
+      data: {
+        adminId: data.adminId,
+        token: data.token,
+        expiresAt: data.expiresAt,
+        uuid  : data.uuid,
+      },
+    });
+    return result;
+  } catch (error) {
+    throw new Error(`DB error in findByPhone: ${error.message}`);
+  }
 }
 
+async findResetTokenByuuid(uuid) {
+  try {
+    const result = await prisma.Passwordreset.findFirst({
+      where: {
+        uuid,
+      },
+    });
+    return result;
+  } catch (error) {
+    throw new Error(`DB error in findByPhone: ${error.message}`);
+  }
+}
+async updateResetToken(tokenId, data) {
+  try {
+    const result = await prisma.Passwordreset.update({
+      where: {
+        id: tokenId
+      },
+      data: {
+        ...data,
+      },
+    });
+    return result;
+  } catch (error) {
+    throw new Error(`DB error in findByPhone: ${error.message}`);
+  }
+  
+}
+}
 export default AdminRepository;
 
 

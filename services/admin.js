@@ -1,13 +1,19 @@
+// import { v4 as uuidv4 } from 'uuid'
 import { createAdminSchema } from "../validation/admin";
+
+// import { v4 as uuidv4 } from 'uuid';
+const { v4: uuidv4 } = require('uuid'); 
+
+
 
 import AdminRepository from "../repository/admin.js";
 import bcrypt from "bcrypt";
 import {sendOTPviaSMS} from '../utils/sms'
-import { v4 as uuidv4 } from "uuid";
-import{generateOtp,getOtpExpiry} from '../utils/otp'
 
+ 
+import{generateOtp,getOtpExpiry} from '../utils/otp'
 const adminRepo = new AdminRepository();
-console.log("service1");
+// console.log("service1111");
 
 export const create = async (req, res, next) => {
     const file = req.file;
@@ -23,6 +29,7 @@ export const create = async (req, res, next) => {
       
       password,
       isSuperAdmin,
+   
     } = req.body;
     if (!name)
       return res
@@ -72,7 +79,9 @@ export const create = async (req, res, next) => {
   phoneNumber,
   password: plainPassword,
   isSuperAdmin: String(isSuperAdmin).toLowerCase() === "true",
-  profilePhoto: profilePhotoPath
+  profilePhoto: profilePhotoPath,
+   isActive: true
+  
 };
 
 const result = await adminRepo.create({ ...req, body: parsedData }, res);
@@ -198,6 +207,8 @@ export const otpsent = async (req,res,next)=>{
     }
 
     const admin = await adminRepo.findByPhone(phoneNumber);
+    console.log("Admin found:", admin?.isActive);
+    
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
     }
@@ -206,7 +217,7 @@ export const otpsent = async (req,res,next)=>{
     }
     
   
-console.log("Admin found:", admin);
+// console.log("Admin found:", admin);
     const otpCode = generateOtp();
     const otpExpiry = getOtpExpiry();
   console.log("asssd",otpCode, otpExpiry);
@@ -251,7 +262,7 @@ export const otpverify = async (req,res,next)=>{
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
     }
-     console.log("Admin found:", admin);
+     console.log("Admin found:", admin.otpCode);
     if (!admin.isActive) {  
       return res.status(403).json({ message: "Admin account is inactive or suspended" });
     }
@@ -267,7 +278,7 @@ export const otpverify = async (req,res,next)=>{
       return res.status(400).json({ message: "OTP expired" });
     }
 
-    console.log("new Date() <= new Date(admin.otpExpiry):", new Date() > new Date(admin.otpExpiry));
+console.log("Stored OTP:", admin.otpCode, "Received OTP:", otpCode);
     
      if (String(admin.otpCode) !== String(otpCode)) {
       return res.status(400).json({ message: "Invalid OTP" });
@@ -296,6 +307,7 @@ export const login_admin = async (req, res) => {
     if (!admin.isActive) {
       return res.status(403).json({ message: "Admin account is inactive. Contact support." });
     }
+console.log("Admin found:", admin.isActive, "OTP Verified:", admin.isOtpVerified);
 
     if (!admin.isOtpVerified) {
       return res.status(400).json({ message: "Please verify OTP first" });
@@ -305,8 +317,7 @@ export const login_admin = async (req, res) => {
     if (!isMatch) {
        console.log(admin.password, password);
       return res.status(400).json({ message: "Incorrect password" });
-     
-      
+          
     }
 
     await adminRepo.updateByPhone(phoneNumber, { lastLogin: new Date() });
@@ -323,14 +334,17 @@ export const login_admin = async (req, res) => {
 
 
 
-export const passwordreset = async (req, res) => {
+export const passwordreset = async (req, res,next) => {
 try {
+  console.log("105");
+  
   const {phoneNumber} = req.body
   if(!phoneNumber) {
     return res.status(400).json({ message: "phoneNumber is required" });
   }
 
       const admin = await adminRepo.findByPhone(phoneNumber);
+    console.  log("Admin found:", admin);
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
     }
@@ -343,17 +357,23 @@ try {
 
   const otpCode = generateOtp();
   const otpExpiry = getOtpExpiry();
-    const uuid = uuidv4();
-      await adminRepo.updateByPhone(phoneNumber, {
-         adminId: admin.id,
-      otpCode,
-      otpExpiry,
-      uuid, // Store UUID for tracking
- // Ensure OTP is not verified yet
+      const uuid = uuidv4();
+    
+         await adminRepo.deleteResetTokenByAdminId(admin.id);
+         console.log("Deleted previous reset tokens for adminId:", admin.id );
+         
+          await adminRepo.createResetToken({
+      token: otpCode,
+   
+      adminId: admin.id,
+      expiresAt: otpExpiry,
+  uuid: uuid,
     });
-      await sendOTPviaSMS(phoneNumber, otpCode);
 
-    res.status(200).json({ message: "OTP sent to your phone", result: { phoneNumber, otpCode } });
+      await sendOTPviaSMS(phoneNumber, otpCode, );
+  console.log("OTP sent via SMS:", otpCode, "to phoneNumber:", phoneNumber);
+
+    res.status(200).json({ message: "OTP sent to your phone", result: { phoneNumber, otpCode,uuid } });
 } catch (error) {
   console.error(error);
   res.status(500).json({ message: "Internal server error" });
@@ -363,69 +383,72 @@ try {
 
 
 
-export const newpasswordverify = async (req, res) => {
-     try {
-    const { phoneNumber, otpCode, newPassword,  confirmPassword   } = req.body;
+  export const newpasswordverify = async (req, res) => {
+    try {
+      const { phoneNumber, otpCode, newPassword, confirmPassword ,uuid } = req.body;
 
-    if (!phoneNumber || !otpCode || !newPassword || !confirmPassword) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
-    }
-
-    const admin = await adminRepo.findByPhone(phoneNumber);
-    if (!admin) {
-      return res.status(404).json({ message: "Admin not found" });
-    }
-    if (!admin.isActive) {
-      return res.status(403).json({ message: "Admin account is inactive or suspended" });
-    }
-  
-  
-    
- 
-    if (!admin.otpCode || !admin.otpExpiry) {
-      return res.status(400).json({ message: "OTP not sent or already used" });
-    }
-
-    if (String(admin.otpCode) !== String(otpCode)) {
-      return res.status(400).json({ message: "Invalid OTP" });
-    }
      
-      const resetRecord = await adminRepo.findByToken(token);
-    if (!resetRecord || resetRecord.adminId !== admin.id) {
-      return res.status(400).json({ message: "Invalid or expired token" });
+      if (!phoneNumber || !otpCode || !newPassword || !confirmPassword || !uuid) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match" });
+      }
+
+      const admin = await adminRepo.findByPhone(phoneNumber);
+      if (!admin) {
+        return res.status(404).json({ message: "Admin not found" });
+      }
+
+      if (!admin.isActive) {
+        return res.status(403).json({ message: "Admin account is inactive or suspended" });
+      }
+
+      // Find token 
+      const tokenRecord = await adminRepo.findResetTokenByuuid(uuid);
+      if (!tokenRecord) {
+        return res.status(400).json({ message: "No OTP request found pls  first sent otp" });
+      }
+      console.log(admin.id);
+      console.log("OTP Code:", otpCode, tokenRecord.token);
+      
+  console.log("Token Record:", tokenRecord);
+
+      // Match token 
+      if (tokenRecord.token !== otpCode || tokenRecord.adminId !== admin.id) {
+        return res.status(400).json({ message: "Invalid or expired OTP" });
+      }
+
+      // Check if token is expired or already used
+      const now = new Date();
+      if (tokenRecord.usedAt || now > new Date(tokenRecord.expiresAt)) {
+        return res.status(400).json({ message: "OTP expired or already used" });
+      }
+
+      //  password is not same as old password
+      const isSame = await bcrypt.compare(newPassword, admin.password);
+      if (isSame) {
+        return res.status(400).json({ message: "New password must be different from the old password" });
+      }
+
+  
+      const hashed = await bcrypt.hash(newPassword, 10);
+
+      // Mark OTP as used
+    await adminRepo.updateResetToken(tokenRecord.id, { usedAt: new Date() });
+
+
+      // Update admin password 
+      await adminRepo.updateByPhone(phoneNumber, {
+        password: hashed,
+        
+      });
+
+      return res.status(200).json({ message: "Password reset successful" });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Server error" });
     }
-     if (resetRecord.usedAt) {
-      return res.status(400).json({ message: "Token already used" });
-    }
+  };
 
-
-    if (new Date() > new Date(admin.otpExpiry)) {
-      return res.status(400).json({ message: "OTP expired" });
-    }
-
-    const isSame = await bcrypt.compare(newPassword, admin.password);
-    console.log("New password hashed:", hashed);
-    if (isSame) {
-      return res.status(400).json({ message: "New password must be different from the old password" });
-    }
-    const hashed = await bcrypt.hash(newPassword,10);
-    
-
-   const result = await adminRepo.updateByPhone(phoneNumber, {
-      password: hashed,
-      otpCode: null,
-      otpExpiry: null,
-    });
-  await adminRepo.markUsed(token);
-
-    return res.status(200).json({ message: "Password reset successful",result: { phoneNumber ,newPassword,hashed} });
-  } catch (err) {
-    console.log(err);
-    
-    return res.status(500).json({ message: "Server error" });
-  }
-}

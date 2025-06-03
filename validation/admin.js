@@ -26,14 +26,12 @@ exports.createAdminSchema = Joi.object({
       "any.required": "Age is required",
     }),
 
-  phoneNumber: Joi.string()
-    .pattern(/^\d{10}$/)
-    .required()
-    .messages({
-      "string.empty": "Phone number is required",
-      "string.pattern.base": "Phone number must be exactly 10 digits",
-    }),
-
+phoneNumber: Joi.string()
+  .pattern(/^\+?[0-9]{10,15}$/)
+  .required()
+  .messages({
+    "string.pattern.base": `"phoneNumber" must be a valid phone number`,
+  }),
   password: Joi.string()
     .min(6)
     .pattern(/^(?=.*[A-Z])(?=.*[!@#$%^&*])/)
