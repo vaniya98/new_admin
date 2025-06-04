@@ -15,6 +15,7 @@
     "multer": "^2.0.0",
     "my-next-app": "file:",
     "next": "15.3.2",
+    "nodemailer": "^7.0.3",
     "prisma": "^6.8.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

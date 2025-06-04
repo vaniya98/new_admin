@@ -135,14 +135,16 @@ async findByPhone(phoneNumber){
 
   
     const result = await this.model.findFirst({
-      where:{phoneNumber},
+      where:{phoneNumber,
+     
+      },
       // select: {
       //   id: true,
       //   name: true,
       //   email: true,
       //   age: true,
       //   phoneNumber: true,
-      //     otpCode: true,
+          //  otpCode: true,
       //   otpExpiry: true,
       //   password: true,
         
@@ -197,9 +199,11 @@ async createResetToken(data) {
         adminId: data.adminId,
         token: data.token,
         expiresAt: data.expiresAt,
-        uuid  : data.uuid,
+          uuid: data.uuid || null,
+       
       },
     });
+   
     return result;
   } catch (error) {
     throw new Error(`DB error in findByPhone: ${error.message}`);
@@ -233,6 +237,46 @@ async updateResetToken(tokenId, data) {
     throw new Error(`DB error in findByPhone: ${error.message}`);
   }
   
+}
+async findByEmail(email) {
+  try {
+    const result = await this.model.findFirst({
+      where: {
+        email,
+      },
+    });
+    return result;
+  } catch (error) {
+    throw new Error(`DB error in findByEmail: ${error.message}`);
+  }
+}
+async updateByemail (email, data) {
+  try {
+    const result = await this.model.update({
+      where: { email },
+      data,
+    });
+    return result;
+  } catch (error) {
+    throw new Error(`DB error in updateByemail: ${error.message}`);
+  }
+ 
+}
+async findLatestResetTokenByAdminId(adminId) {
+  try {
+    const result = await prisma.Passwordreset.findFirst({
+       where: {
+      adminId,
+      usedAt: null,
+      expiresAt: { gte: new Date() },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+    return result;
+  } catch (error) {
+    throw new Error(`DB error in findLatestResetTokenByAdminId: ${error.message}`);
+  }
 }
 }
 export default AdminRepository;
