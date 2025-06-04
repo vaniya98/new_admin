@@ -3,8 +3,10 @@ import { createAdminSchema } from "../validation/admin";
 
 import { sendOTPviaSMS } from "../utils/sms";
 import { sendOTPviaEmail } from "../utils/email";
-// import { v4 as uuidv4 } from 'uuid';
-const { v4: uuidv4 } = require('uuid'); 
+ import jwt from "jsonwebtoken";
+ import { serialize } from "cookie";
+ const { v4: uuidv4 } = require('uuid'); 
+
 
 
 
@@ -14,6 +16,7 @@ import bcrypt from "bcrypt";
 
  
 import{generateOtp,getOtpExpiry} from '../utils/otp'
+// import { v4 as uuidv4 } from 'uuid';
 const adminRepo = new AdminRepository();
 // console.log("service1111");
 
@@ -321,7 +324,21 @@ console.log("Admin found:", admin.isActive, "OTP Verified:", admin.isOtpVerified
       return res.status(400).json({ message: "Incorrect password" });
           
     }
+    const token = jwt.sign(
+      { id: admin.id, email: admin.email, password: admin.password },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
 
+    const cookie = serialize("adminToken", token, {
+      ///// 'admintoken' ==  name of cookie store jwt token,token ==
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: 60 * 60 * 24,
+    });
+    res.setHeader("Set-Cookie", cookie);
     await adminRepo.updateByPhone(phoneNumber, { lastLogin: new Date() });
 
     res.status(200).json({ message: "Login successful", result: { phoneNumber } });

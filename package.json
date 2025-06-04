@@ -11,7 +11,9 @@
   "dependencies": {
     "@prisma/client": "^6.8.2",
     "bcrypt": "^6.0.0",
+    "cookie": "^1.0.2",
     "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.0",
     "my-next-app": "file:",
     "next": "15.3.2",
